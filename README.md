@@ -11,16 +11,16 @@ Modules for the [Shizu](https://github.com/ibeswipin/Shizu) Telegram userbot. Th
 
 ## Install
 
-The repo is private, so add it to Shizu as a private store (once):
+Install a single module by its raw link:
 
 ```
-.config ShizuLoader
+.dlmod https://raw.githubusercontent.com/why-morphy/morphyModules/main/modules/RandomReact.py
 ```
 
-Set `private_repo` to `https://github.com/why-morphy/morphyModules/tree/main/modules` and `private_token` to a GitHub token that can read this repo. Then:
+Or use the whole store: open `.config ShizuLoader` and set `repo` to `https://github.com/why-morphy/morphyModules/tree/main/modules` (this replaces the default ShizuMods store). Then:
 
 ```
-.dlmod                 lists modules from all stores
+.dlmod                 lists the modules
 .dlmod RandomReact     installs one by its install name
 ```
 
