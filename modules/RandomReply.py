@@ -1,6 +1,7 @@
 # Original Hikka module by archfemboy (tg: archfemboy, archfemboy.github.io)
 # Integrated into Shizu by why-morphy
 
+# ⟡ why-morphy — Shizu modules
 import asyncio
 import random
 

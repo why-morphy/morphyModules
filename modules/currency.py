@@ -1,5 +1,7 @@
 # required: aiohttp
 
+# ⟡ why-morphy — Shizu modules
+
 import asyncio
 import time
 from datetime import datetime, timezone

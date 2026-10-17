@@ -2,3 +2,5 @@ RandomReact
 RandomReply
 currency
 upscayl
+AIManager
+Forwarder

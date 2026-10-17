@@ -2,6 +2,8 @@
 # The Python engine (used where upscayl-bin has no build, e.g. ARM Linux) also
 # needs ncnn, numpy and pillow; .upsetup installs them (pip or uv) when needed.
 
+# ⟡ why-morphy — Shizu modules
+
 import asyncio
 import contextlib
 import os
