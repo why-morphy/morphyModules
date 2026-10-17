@@ -27,9 +27,9 @@ from pyrogram.errors import MessageNotModified
 from .. import loader, utils
 
 try:
-    from ..telegram.rich import form_html
+    from ..telegram.rich import button_rows
 except ImportError:
-    form_html = None
+    button_rows = None
 
 
 AUTH_TIMEOUT = 10 * 60
@@ -1060,8 +1060,24 @@ class AIManagerMod(loader.Module):
         return button
 
     @staticmethod
-    async def _show(call, cid: str, text: str, markup: list) -> None:
-        extra = {"rich_message": form_html(text, markup)} if form_html else {}
+    def _rich_form(text: str, markup: list) -> dict | None:
+        """Build a structured rich view while retaining the text as a fallback."""
+        if button_rows is None:
+            return None
+        sections = [section for section in text.split("\n\n") if section.strip()]
+        if not sections:
+            return {"html": button_rows(markup)}
+        title, *cards = sections
+        html = f"<h2>{title}</h2>" + "".join(
+            f"<blockquote>{card.replace(chr(10), '<br>')}</blockquote>"
+            for card in cards
+        )
+        return {"html": html + button_rows(markup)}
+
+    @classmethod
+    async def _show(cls, call, cid: str, text: str, markup: list) -> None:
+        rich = cls._rich_form(text, markup)
+        extra = {"rich_message": rich} if rich else {}
         await call.edit(text, reply_markup=markup, inline_message_id=cid, **extra)
 
     async def _main_view(self, chat: int | None) -> tuple[str, list]:
@@ -1314,11 +1330,11 @@ class AIManagerMod(loader.Module):
         if not tokens:
             chat = message.chat.id if self._is_private(message) else None
             text, markup = await self._main_view(chat)
-            if form_html:
+            if rich := self._rich_form(text, markup):
                 return await message.answer(
                     text,
                     reply_markup=markup,
-                    rich_message=form_html(text, markup),
+                    rich_message=rich,
                     ttl=self.config["menu_ttl"],
                 )
             return await self.inline.form(

@@ -345,6 +345,16 @@ class UpscaylMod(loader.Module):
         "cfg_auto": "Скачивать upscayl-bin и модели автоматически",
     }
 
+    @staticmethod
+    def _rich_status(title: str, text: str) -> dict:
+        """A visual status card with the original text retained as fallback."""
+        return {
+            "html": (
+                f"<h2>{title}</h2>"
+                f"<blockquote>{text.replace(chr(10), '<br>')}</blockquote>"
+            )
+        }
+
     def __init__(self):
         self.config = loader.ModuleConfig(
             "binary_path", "", lambda: self.strings("cfg_binary"),
@@ -894,11 +904,11 @@ class UpscaylMod(loader.Module):
             for name, desc in MODELS.items()
         ]
         lines += [f"✅ <code>{n}</code> — custom" for n in sorted(local - set(MODELS))]
+        text = self.strings("models").format(
+            utils.escape_html(str(self.config["model"]) or "auto"), "\n".join(lines)
+        )
         await utils.answer(
-            message,
-            self.strings("models").format(
-                utils.escape_html(str(self.config["model"]) or "auto"), "\n".join(lines)
-            ),
+            message, text, rich_message=self._rich_status("🧠 Upscayl models", text)
         )
 
     @loader.command()
@@ -924,10 +934,10 @@ class UpscaylMod(loader.Module):
             await self._ensure_model(message, self._default_choice(backend)[0])
         except RuntimeError as e:
             return await utils.answer(message, str(e))
+        text = self.strings("setup_ok").format(
+            self._engine_text(backend, exe, version),
+            utils.escape_html(str(self._models_dir())),
+        )
         await utils.answer(
-            message,
-            self.strings("setup_ok").format(
-                self._engine_text(backend, exe, version),
-                utils.escape_html(str(self._models_dir())),
-            ),
+            message, text, rich_message=self._rich_status("✅ Upscayl ready", text)
         )

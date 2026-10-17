@@ -12,6 +12,11 @@ from pyrogram.types import CallbackQuery
 
 from .. import loader, utils
 
+try:
+    from ..telegram.rich import button_rows
+except ImportError:
+    button_rows = None
+
 SOURCES = {
     # Coinbase: no key, fiat + crypto (~650 currencies), refreshed every minute
     "coinbase": "https://api.coinbase.com/v2/exchange-rates?currency={}",
@@ -452,6 +457,24 @@ class CurrencyTrackerMod(loader.Module):
     def _rates_markup(self):
         return [[{"text": self.strings("btn_refresh"), "callback": self.inline__refresh}]]
 
+    @staticmethod
+    def _rich_rates(text: str, markup: list | None) -> dict | None:
+        """Render the rate dashboard as rich cards, with a text fallback."""
+        if button_rows is None or not markup:
+            return None
+        sections = [section for section in text.split("\n\n") if section.strip()]
+        if len(sections) < 2:
+            return None
+        title, *cards = sections
+        footer = cards.pop() if cards else ""
+        html = f"<h2>{title}</h2>" + "".join(
+            f"<blockquote>{card.replace(chr(10), '<br>')}</blockquote>"
+            for card in cards
+        )
+        if footer:
+            html += f"<blockquote>{footer}</blockquote>"
+        return {"html": html + button_rows(markup)}
+
     @loader.command()
     async def rates(self, app: Client, message: types.Message):
         """Show tracked pairs with 24h/7d changes"""
@@ -462,7 +485,8 @@ class CurrencyTrackerMod(loader.Module):
                 message, self.strings("fetch_failed").format(utils.escape_html(str(e)))
             )
         markup = self._rates_markup() if self.get("pairs", {}) else None
-        await utils.answer(message, text, reply_markup=markup)
+        rich = self._rich_rates(text, markup)
+        await utils.answer(message, text, reply_markup=markup, rich_message=rich)
 
     async def inline__refresh(self, call: CallbackQuery):
         self._cache.clear()
@@ -470,7 +494,9 @@ class CurrencyTrackerMod(loader.Module):
             text = await self._rates_text()
         except Exception as e:
             return await call.answer(str(e)[:200])
-        await call.edit(text, reply_markup=self._rates_markup())
+        markup = self._rates_markup()
+        rich = self._rich_rates(text, markup)
+        await call.edit(text, reply_markup=markup, rich_message=rich)
 
     @loader.command()
     async def rate(self, app: Client, message: types.Message):
